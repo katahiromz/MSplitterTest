@@ -143,7 +143,7 @@ WinMain(HINSTANCE   hInstance,
 {
     InitCommonControls();
     MSplitterTest mainWnd;
-    if (!mainWnd.CreateWindowDx(NULL, NULL))
+    if (!mainWnd.CreateWindowDx(NULL, TEXT("MSplitterTest")))
     {
         MessageBox(NULL, TEXT("CreateWindowDx failed"), NULL, MB_ICONERROR);
         return -1;
