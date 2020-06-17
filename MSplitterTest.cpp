@@ -1,4 +1,5 @@
 #include "MSplitterWnd.hpp"
+#include "MTabCtrl.hpp"
 
 class MSplitterTest : public MWindowBase
 {
@@ -54,6 +55,7 @@ protected:
     HWND m_hEdit3;
     MSplitterWnd m_splitter1;
     MSplitterWnd m_splitter2;
+    MTabCtrl m_tab;
 
     BOOL OnCreate(HWND hwnd, LPCREATESTRUCT lpCreateStruct)
     {
@@ -65,23 +67,34 @@ protected:
         style = WS_CHILD | WS_VISIBLE | SWS_HORZ | SWS_LEFTALIGN;
         if (!m_splitter1.CreateDx(hwnd, 2, style))
             return FALSE;
-        style = WS_CHILD | WS_VISIBLE | SWS_VERT | SWS_BOTTOMALIGN;
+
+        style = WS_CHILD | WS_VISIBLE | WS_BORDER | TCS_BOTTOM | TCS_TABS | TCS_TOOLTIPS |
+                TCS_FOCUSNEVER | TCS_HOTTRACK | TCS_MULTILINE;
+        if (!m_tab.CreateWindowDx(m_splitter1, NULL, style))
+            return FALSE;
+        SetWindowFont(m_tab, GetStockFont(DEFAULT_GUI_FONT), TRUE);
+
+        style = WS_CHILD | WS_VISIBLE | SWS_HORZ | SWS_RIGHTALIGN;
         if (!m_splitter2.CreateDx(m_splitter1, 2, style))
             return FALSE;
 
+        m_tab.InsertItem(0, TEXT("Code Editor"));
+        m_tab.InsertItem(1, TEXT("Hex Viewer"));
+        m_tab.SetCurSel(0);
+
         style = WS_CHILD | WS_VISIBLE | ES_MULTILINE | WS_HSCROLL | WS_VSCROLL;
         exstyle = WS_EX_CLIENTEDGE;
-        m_hEdit1 = CreateWindowEx(exstyle, TEXT("EDIT"), NULL, style, 0, 0, 0, 0,
+        m_hEdit1 = CreateWindowEx(exstyle, TEXT("EDIT"), TEXT("m_hEdit1"), style, 0, 0, 0, 0,
             m_splitter1, NULL, GetModuleHandle(NULL), NULL);
-        m_hEdit2 = CreateWindowEx(exstyle, TEXT("EDIT"), NULL, style, 0, 0, 0, 0,
+        m_hEdit2 = CreateWindowEx(exstyle, TEXT("EDIT"), TEXT("m_hEdit2"), style, 0, 0, 0, 0,
             m_splitter2, NULL, GetModuleHandle(NULL), NULL);
-        m_hEdit3 = CreateWindowEx(exstyle, TEXT("EDIT"), NULL, style, 0, 0, 0, 0,
+        m_hEdit3 = CreateWindowEx(exstyle, TEXT("EDIT"), TEXT("m_hEdit3"), style, 0, 0, 0, 0,
             m_splitter2, NULL, GetModuleHandle(NULL), NULL);
         if (!m_hEdit1 || !m_hEdit2 || !m_hEdit3)
             return FALSE;
 
         m_splitter1.SetPane(0, m_hEdit1);
-        m_splitter1.SetPane(1, m_splitter2);
+        m_splitter1.SetPane(1, m_tab);
         m_splitter1.SetPaneExtent(0, m_cxy1);
 
         m_splitter2.SetPane(0, m_hEdit2);
@@ -95,9 +108,17 @@ protected:
     void OnSize(HWND hwnd, UINT state, int cx, int cy)
     {
         RECT rc;
+        SIZE siz;
+
         GetClientRect(hwnd, &rc);
-        SIZE siz = SizeFromRectDx(&rc);
+        siz = SizeFromRectDx(&rc);
         MoveWindow(m_splitter1, rc.left, rc.top, siz.cx, siz.cy, TRUE);
+
+        GetClientRect(m_tab, &rc);
+        m_tab.AdjustRect(FALSE, &rc);
+        MapWindowRect(m_tab, GetParent(m_splitter2), &rc);
+        siz = SizeFromRectDx(&rc);
+        MoveWindow(m_splitter2, rc.left, rc.top, siz.cx, siz.cy, TRUE);
     }
 
     void OnSysColorChange(HWND hwnd)
@@ -109,16 +130,21 @@ protected:
     {
         if (pnmhdr->hwndFrom == m_splitter1)
         {
-            if (m_splitter1.GetPaneCount() >= 1)
+            if (pnmhdr->code == MSplitterWnd::NOTIFY_CHANGED)
             {
                 m_cxy1 = m_splitter1.GetPaneExtent(0);
+                PostMessage(hwnd, WM_SIZE, 0, 0);
             }
         }
         else if (pnmhdr->hwndFrom == m_splitter2)
         {
-            if (m_splitter2.GetPaneCount() >= 1)
+            PostMessage(hwnd, WM_SIZE, 0, 0);
+        }
+        else if (pnmhdr->hwndFrom == m_tab)
+        {
+            if (pnmhdr->code == TCN_SELCHANGE)
             {
-                m_cxy2 = m_splitter2.GetPaneExtent(0);
+                // TODO:
             }
         }
         return 0;
@@ -126,11 +152,12 @@ protected:
 
     void OnDestroy(HWND hwnd)
     {
-        DestroyWindow(m_splitter1);
-        DestroyWindow(m_splitter2);
         DestroyWindow(m_hEdit1);
         DestroyWindow(m_hEdit2);
         DestroyWindow(m_hEdit3);
+        DestroyWindow(m_splitter2);
+        DestroyWindow(m_tab);
+        DestroyWindow(m_splitter1);
         PostQuitMessage(0);
     }
 };
@@ -142,6 +169,7 @@ WinMain(HINSTANCE   hInstance,
         INT         nCmdShow)
 {
     InitCommonControls();
+
     MSplitterTest mainWnd;
     if (!mainWnd.CreateWindowDx(NULL, TEXT("MSplitterTest")))
     {
