@@ -121,16 +121,9 @@ protected:
 
         GetClientRect(m_tab, &rc);
         m_tab.AdjustRect(FALSE, &rc);
-        if (m_tab.GetCurSel() == 0)
-        {
-            MapWindowRect(m_tab, GetParent(m_splitter2), &rc);
-            siz = SizeFromRectDx(&rc);
-            MoveWindow(m_splitter2, rc.left, rc.top, siz.cx, siz.cy, TRUE);
-        }
-        else
-        {
-            MoveWindow(m_hEdit4, rc.left, rc.top, siz.cx, siz.cy, TRUE);
-        }
+        MapWindowRect(m_tab, GetParent(m_splitter2), &rc);
+        siz = SizeFromRectDx(&rc);
+        MoveWindow(m_splitter2, rc.left, rc.top, siz.cx, siz.cy, TRUE);
     }
 
     void OnSysColorChange(HWND hwnd)
@@ -189,6 +182,7 @@ protected:
             m_splitter2.SetPaneCount(1);
             m_splitter2.SetPane(0, m_hEdit4);
         }
+        PostMessage(hwnd, WM_SIZE, 0, 0);
     }
 
     void OnDestroy(HWND hwnd)
