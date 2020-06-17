@@ -160,9 +160,9 @@ protected:
         return 0;
     }
 
-    void OnSelChange(HWND hwnd, INT iItem)
+    void OnSelChange(HWND hwnd, INT iSelected)
     {
-        if (iItem == 0)
+        if (iSelected == 0)
         {
             ShowWindow(m_hEdit2, SW_SHOWNOACTIVATE);
             ShowWindow(m_hEdit3, SW_SHOWNOACTIVATE);
@@ -173,7 +173,7 @@ protected:
             m_splitter2.SetPane(1, m_hEdit3);
             m_splitter2.SetPaneExtent(1, m_cxy2);
         }
-        else
+        else if (iSelected == 1)
         {
             ShowWindow(m_hEdit2, SW_HIDE);
             ShowWindow(m_hEdit3, SW_HIDE);
