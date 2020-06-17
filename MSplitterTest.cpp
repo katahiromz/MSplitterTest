@@ -138,7 +138,10 @@ protected:
         }
         else if (pnmhdr->hwndFrom == m_splitter2)
         {
-            PostMessage(hwnd, WM_SIZE, 0, 0);
+            if (pnmhdr->code == MSplitterWnd::NOTIFY_CHANGED)
+            {
+                m_cxy2 = m_splitter2.GetPaneExtent(1);
+            }
         }
         else if (pnmhdr->hwndFrom == m_tab)
         {
