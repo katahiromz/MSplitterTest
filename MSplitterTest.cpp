@@ -53,6 +53,7 @@ protected:
     HWND m_hEdit1;
     HWND m_hEdit2;
     HWND m_hEdit3;
+    HWND m_hEdit4;
     MSplitterWnd m_splitter1;
     MSplitterWnd m_splitter2;
     MTabCtrl m_tab;
@@ -90,7 +91,9 @@ protected:
             m_splitter2, NULL, GetModuleHandle(NULL), NULL);
         m_hEdit3 = CreateWindowEx(exstyle, TEXT("EDIT"), TEXT("m_hEdit3"), style, 0, 0, 0, 0,
             m_splitter2, NULL, GetModuleHandle(NULL), NULL);
-        if (!m_hEdit1 || !m_hEdit2 || !m_hEdit3)
+        m_hEdit4 = CreateWindowEx(exstyle, TEXT("EDIT"), TEXT("m_hEdit4"), style, 0, 0, 0, 0,
+            m_splitter2, NULL, GetModuleHandle(NULL), NULL);
+        if (!m_hEdit1 || !m_hEdit2 || !m_hEdit4)
             return FALSE;
 
         m_splitter1.SetPane(0, m_hEdit1);
@@ -100,6 +103,8 @@ protected:
         m_splitter2.SetPane(0, m_hEdit2);
         m_splitter2.SetPane(1, m_hEdit3);
         m_splitter2.SetPaneExtent(1, m_cxy2);
+
+        OnSelChange(hwnd, 0);
 
         PostMessage(hwnd, WM_SIZE, 0, 0);
         return TRUE;
@@ -116,9 +121,16 @@ protected:
 
         GetClientRect(m_tab, &rc);
         m_tab.AdjustRect(FALSE, &rc);
-        MapWindowRect(m_tab, GetParent(m_splitter2), &rc);
-        siz = SizeFromRectDx(&rc);
-        MoveWindow(m_splitter2, rc.left, rc.top, siz.cx, siz.cy, TRUE);
+        if (m_tab.GetCurSel() == 0)
+        {
+            MapWindowRect(m_tab, GetParent(m_splitter2), &rc);
+            siz = SizeFromRectDx(&rc);
+            MoveWindow(m_splitter2, rc.left, rc.top, siz.cx, siz.cy, TRUE);
+        }
+        else
+        {
+            MoveWindow(m_hEdit4, rc.left, rc.top, siz.cx, siz.cy, TRUE);
+        }
     }
 
     void OnSysColorChange(HWND hwnd)
@@ -132,7 +144,8 @@ protected:
         {
             if (pnmhdr->code == MSplitterWnd::NOTIFY_CHANGED)
             {
-                m_cxy1 = m_splitter1.GetPaneExtent(0);
+                if (m_splitter1.GetPaneCount() >= 2)
+                    m_cxy1 = m_splitter1.GetPaneExtent(0);
                 PostMessage(hwnd, WM_SIZE, 0, 0);
             }
         }
@@ -140,17 +153,42 @@ protected:
         {
             if (pnmhdr->code == MSplitterWnd::NOTIFY_CHANGED)
             {
-                m_cxy2 = m_splitter2.GetPaneExtent(1);
+                if (m_splitter2.GetPaneCount() >= 2)
+                    m_cxy2 = m_splitter2.GetPaneExtent(1);
             }
         }
         else if (pnmhdr->hwndFrom == m_tab)
         {
             if (pnmhdr->code == TCN_SELCHANGE)
             {
-                // TODO:
+                OnSelChange(hwnd, m_tab.GetCurSel());
             }
         }
         return 0;
+    }
+
+    void OnSelChange(HWND hwnd, INT iItem)
+    {
+        if (iItem == 0)
+        {
+            ShowWindow(m_hEdit2, SW_SHOWNOACTIVATE);
+            ShowWindow(m_hEdit3, SW_SHOWNOACTIVATE);
+            ShowWindow(m_hEdit4, SW_HIDE);
+
+            m_splitter2.SetPaneCount(2);
+            m_splitter2.SetPane(0, m_hEdit2);
+            m_splitter2.SetPane(1, m_hEdit3);
+            m_splitter2.SetPaneExtent(1, m_cxy2);
+        }
+        else
+        {
+            ShowWindow(m_hEdit2, SW_HIDE);
+            ShowWindow(m_hEdit3, SW_HIDE);
+            ShowWindow(m_hEdit4, SW_SHOWNOACTIVATE);
+
+            m_splitter2.SetPaneCount(1);
+            m_splitter2.SetPane(0, m_hEdit4);
+        }
     }
 
     void OnDestroy(HWND hwnd)
